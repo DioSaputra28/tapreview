@@ -855,61 +855,14 @@ git commit -m "feat: add create/edit forms and on-demand QR code"
 
 ---
 
-## Task 8: Redirect route handler + fill-link form
+## Task 8: Redirect + fill-link form
 
 **Files:**
-- Create: `app/[slug]/route.ts`
 - Create: `app/[slug]/page.tsx`
 
-- [ ] **Step 1: Create redirect handler**
+> **Design note (route.ts vs page.tsx):** A Route Handler (`route.ts`) and a `page.tsx` cannot coexist for the same dynamic segment in the App Router. Since this route must BOTH redirect (when `link_review` is filled) and render a form (when empty), the logic lives in a single `page.tsx` that calls `redirect()` for the filled case. The counter is incremented via the `increment_klik` RPC before `redirect()`.
 
-Create `app/[slug]/route.ts`:
-
-```ts
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-
-export const dynamic = "force-dynamic";
-
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ slug: string }> }
-) {
-  const { slug } = await params;
-
-  const supabase = await createClient();
-  const { data: toko } = await supabase
-    .from("toko")
-    .select("id, slug, link_review")
-    .eq("slug", slug)
-    .maybeSingle();
-
-  if (!toko) {
-    return new Response("Toko tidak ditemukan", { status: 404 });
-  }
-
-  if (!toko.link_review) {
-    redirect(`/${toko.slug}`);
-  }
-
-  await supabase
-    .from("toko")
-    .update({ total_klik: toko.total_klik + 1 })
-    .eq("id", toko.id);
-
-  redirect(toko.link_review);
-}
-```
-
-> **Note:** The counter increment uses a read-then-write (`total_klik + 1`) for simplicity. To make it fully race-safe, prefer an atomic SQL increment via `rpc`. Add the following SQL function to Supabase and switch to it in Step 2 of this task if desired:
-> ```sql
-> create or replace function public.increment_klik(p_id uuid)
-> returns void language sql as $$
->   update public.toko set total_klik = total_klik + 1 where id = p_id;
-> $$;
-> ```
-
-- [ ] **Step 2: Create fill-link page**
+- [ ] **Step 1: Create the page (handles both redirect and form)**
 
 Create `app/[slug]/page.tsx`:
 
@@ -939,6 +892,7 @@ export default async function SlugPage({
   if (!toko) notFound();
 
   if (toko.link_review) {
+    await supabase.rpc("increment_klik", { p_id: toko.id });
     redirect(toko.link_review);
   }
 
@@ -977,7 +931,16 @@ export default async function SlugPage({
 }
 ```
 
-- [ ] **Step 3: Update `fillLink` to redirect by slug**
+> **Note:** The counter increment uses the `increment_klik` RPC (already created in Supabase — a `SECURITY DEFINER` function so anonymous visitors can bump the counter without edit rights to other columns, and it's atomic/race-safe):
+> ```sql
+> create or replace function public.increment_klik(p_id uuid)
+> returns void language sql security definer set search_path = public as $$
+>   update public.toko set total_klik = total_klik + 1 where id = p_id;
+> $$;
+> grant execute on function public.increment_klik(uuid) to anon, authenticated;
+> ```
+
+- [ ] **Step 2: Update `fillLink` to redirect by slug**
 
 Modify `lib/actions.ts` — replace the final redirect in `fillLink` with:
 
@@ -987,14 +950,14 @@ Modify `lib/actions.ts` — replace the final redirect in `fillLink` with:
   redirect(slug ? `/${slug}` : "/dashboard");
 ```
 
-- [ ] **Step 4: Add `.env` for `NEXT_PUBLIC_SITE_URL` (optional)**
+- [ ] **Step 3: Add `.env` for `NEXT_PUBLIC_SITE_URL` (optional)**
 
 If `NEXT_PUBLIC_SITE_URL` is used (see Task 7), add to `.env.local`:
 ```
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
 git add "app/[slug]" lib/actions.ts

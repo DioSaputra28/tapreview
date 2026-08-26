@@ -1,56 +1,63 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import { createToko } from "@/lib/actions";
 
 export const dynamic = "force-dynamic";
 
-export default async function NewTokoPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
+export default function NewTokoPage() {
   return (
-    <main className="mx-auto w-full max-w-lg flex-1 p-6">
-      <h1 className="text-2xl font-semibold">Toko Baru</h1>
-      <form action={createToko} className="mt-6 space-y-4">
-        <label className="block space-y-1">
-          <span className="text-sm">Nama</span>
-          <input
-            name="nama"
-            required
-            className="w-full rounded-md border px-3 py-2"
-          />
-        </label>
-        <label className="block space-y-1">
-          <span className="text-sm">Slug (kosongkan untuk otomatis)</span>
-          <input
-            name="slug"
-            className="w-full rounded-md border px-3 py-2"
-          />
-        </label>
-        <label className="block space-y-1">
-          <span className="text-sm">Link Google Review</span>
-          <input
-            name="link_review"
-            type="url"
-            className="w-full rounded-md border px-3 py-2"
-          />
-        </label>
-        <div className="flex gap-2">
-          <button
-            type="submit"
-            className="rounded-md bg-foreground px-4 py-2 text-background"
-          >
-            Simpan
-          </button>
-          <Link href="/dashboard" className="rounded-md border px-4 py-2">
-            Batal
-          </Link>
-        </div>
-      </form>
-    </main>
+    <>
+      <div className="mb-8">
+        <h2 className="text-3xl font-bold text-on-surface mb-2">Toko Baru</h2>
+        <p className="text-sm text-on-surface-variant">
+          Tambahkan toko dan link Google review-nya.
+        </p>
+      </div>
+
+      <div className="max-w-lg bg-surface-container-lowest rounded-2xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-outline-variant/30">
+        <form action={createToko} className="space-y-4">
+          <label className="block space-y-1">
+            <span className="text-sm font-semibold text-on-surface">Nama</span>
+            <input
+              name="nama"
+              required
+              className="w-full rounded-xl border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm focus:ring-2 focus:ring-secondary focus:outline-none"
+            />
+          </label>
+          <label className="block space-y-1">
+            <span className="text-sm font-semibold text-on-surface">
+              Slug (kosongkan untuk otomatis)
+            </span>
+            <input
+              name="slug"
+              className="w-full rounded-xl border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm focus:ring-2 focus:ring-secondary focus:outline-none"
+            />
+          </label>
+          <label className="block space-y-1">
+            <span className="text-sm font-semibold text-on-surface">
+              Link Google Review
+            </span>
+            <input
+              name="link_review"
+              type="url"
+              className="w-full rounded-xl border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm focus:ring-2 focus:ring-secondary focus:outline-none"
+            />
+          </label>
+          <div className="flex gap-3 pt-2">
+            <button
+              type="submit"
+              className="rounded-full bg-primary px-6 py-2.5 text-white font-semibold text-sm hover:bg-opacity-90 transition-colors"
+            >
+              Simpan
+            </button>
+            <Link
+              href="/dashboard"
+              className="rounded-full border border-outline-variant px-6 py-2.5 text-sm text-on-surface hover:bg-surface-container transition-colors"
+            >
+              Batal
+            </Link>
+          </div>
+        </form>
+      </div>
+    </>
   );
 }

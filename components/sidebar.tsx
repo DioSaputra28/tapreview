@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   ArrowRightStartOnRectangleIcon,
   BuildingStorefrontIcon,
@@ -7,13 +10,18 @@ import {
 } from "@heroicons/react/24/outline";
 import { logout } from "@/app/login/actions";
 
-export function Sidebar({ active }: { active: "dashboard" | "toko" }) {
+export function Sidebar() {
+  const pathname = usePathname();
+
   const itemClass = (isActive: boolean) =>
     `flex items-center gap-x-3 px-4 py-3 rounded-xl transition-all ${
       isActive
         ? "bg-secondary-container text-on-secondary-container font-bold border-l-4 border-secondary"
         : "text-on-surface-variant hover:text-secondary hover:bg-surface-container-high"
     }`;
+
+  const isDashboard = pathname === "/dashboard";
+  const isToko = pathname.startsWith("/dashboard/toko");
 
   return (
     <aside className="w-[260px] h-screen fixed left-0 top-0 bg-surface-bright border-r border-outline-variant flex flex-col p-5 z-20">
@@ -29,11 +37,11 @@ export function Sidebar({ active }: { active: "dashboard" | "toko" }) {
 
       <nav className="flex-1 space-y-2">
         <p className="text-xs uppercase px-4 mb-2 mt-4 text-outline">Menu</p>
-        <Link href="/dashboard" className={itemClass(active === "dashboard")}>
+        <Link href="/dashboard" className={itemClass(isDashboard)}>
           <Squares2X2Icon className="h-5 w-5" />
           <span className="text-sm font-semibold">Dashboard</span>
         </Link>
-        <Link href="/dashboard" className={itemClass(active === "toko")}>
+        <Link href="/dashboard/toko" className={itemClass(isToko)}>
           <BuildingStorefrontIcon className="h-5 w-5" />
           <span className="text-sm">Toko</span>
         </Link>

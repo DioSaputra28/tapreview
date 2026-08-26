@@ -28,3 +28,9 @@ export function normalizeSlug(value: string): string {
 export function randomSlug(): string {
   return crypto.randomUUID().replace(/-/g, "").slice(0, 12);
 }
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isValidUuid(value: string): boolean {
+  return UUID_REGEX.test(value);
+}

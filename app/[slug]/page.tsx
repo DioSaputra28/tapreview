@@ -40,7 +40,6 @@ export default async function SlugPage({
         </p>
         <form action={fillLink} className="mt-6 space-y-4">
           <input type="hidden" name="id" value={toko.id} />
-          <input type="hidden" name="slug" value={toko.slug} />
           <label className="block space-y-1">
             <span className="text-sm font-semibold text-on-surface">
               Link Google Review

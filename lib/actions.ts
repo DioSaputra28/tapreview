@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { isValidUrl, normalizeSlug, randomSlug } from "@/lib/toko";
+import { isValidUrl, isValidUuid, normalizeSlug, randomSlug } from "@/lib/toko";
 
 async function requireUser() {
   const supabase = await createClient();
@@ -41,6 +41,8 @@ export async function createToko(formData: FormData) {
 export async function updateToko(id: string, formData: FormData) {
   const supabase = await requireUser();
 
+  if (!isValidUuid(id)) throw new Error("ID tidak valid");
+
   const nama = String(formData.get("nama") ?? "").trim();
   const link = String(formData.get("link_review") ?? "").trim();
   const slugInput = String(formData.get("slug") ?? "").trim();
@@ -66,6 +68,8 @@ export async function updateToko(id: string, formData: FormData) {
 export async function deleteToko(id: string) {
   const supabase = await requireUser();
 
+  if (!isValidUuid(id)) throw new Error("ID tidak valid");
+
   const { error } = await supabase.from("toko").delete().eq("id", id);
   if (error) throw new Error(error.message);
 
@@ -76,18 +80,22 @@ export async function fillLink(formData: FormData) {
   const supabase = await requireUser();
 
   const id = String(formData.get("id") ?? "");
+
+  if (!isValidUuid(id)) throw new Error("ID tidak valid");
+
   const link = String(formData.get("link_review") ?? "").trim();
 
   if (!isValidUrl(link)) throw new Error("Link tidak valid");
 
-  const { error } = await supabase
+  const { data: toko, error } = await supabase
     .from("toko")
     .update({ link_review: link, updated_at: new Date().toISOString() })
-    .eq("id", id);
+    .eq("id", id)
+    .select("slug")
+    .single();
 
   if (error) throw new Error(error.message);
 
-  const slug = String(formData.get("slug") ?? "");
   revalidatePath("/");
-  redirect(slug ? `/${slug}` : "/dashboard");
+  redirect(`/${toko.slug}`);
 }

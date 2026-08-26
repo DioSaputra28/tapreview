@@ -25,7 +25,6 @@ export function normalizeSlug(value: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-export function slugFromName(name: string): string {
-  const base = normalizeSlug(name) || "toko";
-  return `${base}-${Date.now().toString(36)}`;
+export function randomSlug(): string {
+  return crypto.randomUUID().replace(/-/g, "").slice(0, 12);
 }

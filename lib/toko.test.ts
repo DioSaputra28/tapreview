@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isValidUrl, normalizeSlug, slugFromName } from "./toko";
+import { isValidUrl, normalizeSlug, randomSlug } from "./toko";
 
 describe("isValidUrl", () => {
   it("accepts https URLs", () => {
@@ -25,9 +25,14 @@ describe("normalizeSlug", () => {
   });
 });
 
-describe("slugFromName", () => {
-  it("derives slug from name with timestamp suffix", () => {
-    const slug = slugFromName("Warung Kopi");
-    expect(slug.startsWith("warung-kopi-")).toBe(true);
+describe("randomSlug", () => {
+  it("returns a 12-char alphanumeric string", () => {
+    expect(randomSlug()).toMatch(/^[a-z0-9]{12}$/);
+  });
+
+  it("returns unique values", () => {
+    const a = randomSlug();
+    const b = randomSlug();
+    expect(a).not.toBe(b);
   });
 });

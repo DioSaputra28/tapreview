@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { isValidUrl, normalizeSlug, slugFromName } from "@/lib/toko";
+import { isValidUrl, normalizeSlug, randomSlug } from "@/lib/toko";
 
 async function requireUser() {
   const supabase = await createClient();
@@ -23,7 +23,7 @@ export async function createToko(formData: FormData) {
 
   if (!nama) throw new Error("Nama wajib diisi");
 
-  const slug = slugInput ? normalizeSlug(slugInput) : slugFromName(nama);
+  const slug = slugInput ? normalizeSlug(slugInput) : randomSlug();
   if (!slug) throw new Error("Slug tidak valid");
 
   const link_review = link && isValidUrl(link) ? link : null;
@@ -47,7 +47,7 @@ export async function updateToko(id: string, formData: FormData) {
 
   if (!nama) throw new Error("Nama wajib diisi");
 
-  const slug = slugInput ? normalizeSlug(slugInput) : slugFromName(nama);
+  const slug = slugInput ? normalizeSlug(slugInput) : randomSlug();
   if (!slug) throw new Error("Slug tidak valid");
 
   const link_review = link && isValidUrl(link) ? link : null;

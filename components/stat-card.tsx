@@ -7,7 +7,7 @@ export function StatCard({
   variant?: "primary" | "default";
   label: string;
   value: string | number;
-  icon: string;
+  icon: React.ReactNode;
 }) {
   if (variant === "primary") {
     return (
@@ -15,9 +15,7 @@ export function StatCard({
         <div className="flex justify-between items-start mb-4">
           <h3 className="text-base font-semibold text-white/90">{label}</h3>
           <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-            <span className="material-symbols-outlined text-white text-sm">
-              {icon}
-            </span>
+            <span className="h-4 w-4 text-white">{icon}</span>
           </div>
         </div>
         <p className="text-4xl font-bold">{value}</p>
@@ -30,9 +28,7 @@ export function StatCard({
       <div className="flex justify-between items-start mb-4">
         <h3 className="text-base font-semibold text-on-surface">{label}</h3>
         <div className="w-8 h-8 rounded-full border border-outline-variant flex items-center justify-center">
-          <span className="material-symbols-outlined text-on-surface-variant text-sm">
-            {icon}
-          </span>
+          <span className="h-4 w-4 text-on-surface-variant">{icon}</span>
         </div>
       </div>
       <p className="text-4xl font-bold text-on-surface">{value}</p>

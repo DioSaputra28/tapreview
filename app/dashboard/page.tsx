@@ -1,4 +1,11 @@
 import Link from "next/link";
+import {
+  ArrowUpRightIcon,
+  BuildingStorefrontIcon,
+  CheckCircleIcon,
+  ClockIcon,
+  PlusIcon,
+} from "@heroicons/react/24/outline";
 import { createClient } from "@/lib/supabase/server";
 import { deleteToko } from "@/lib/actions";
 import { StatCard } from "@/components/stat-card";
@@ -33,16 +40,16 @@ export default async function DashboardPage() {
           href="/dashboard/new"
           className="px-6 py-2.5 rounded-full bg-primary text-white font-semibold text-sm hover:bg-opacity-90 transition-colors flex items-center gap-2 shadow-md"
         >
-          <span className="material-symbols-outlined text-sm">add</span>
+          <PlusIcon className="h-4 w-4" />
           Toko Baru
         </Link>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-5">
-        <StatCard variant="primary" label="Total Toko" value={totalToko} icon="storefront" />
-        <StatCard label="Total Klik" value={totalKlik} icon="arrow_outward" />
-        <StatCard label="Toko Aktif" value={aktif} icon="check_circle" />
-        <StatCard label="Toko Tanpa Link" value={tanpaLink} icon="pending" />
+        <StatCard variant="primary" label="Total Toko" value={totalToko} icon={<BuildingStorefrontIcon />} />
+        <StatCard label="Total Klik" value={totalKlik} icon={<ArrowUpRightIcon />} />
+        <StatCard label="Toko Aktif" value={aktif} icon={<CheckCircleIcon />} />
+        <StatCard label="Toko Tanpa Link" value={tanpaLink} icon={<ClockIcon />} />
       </div>
 
       <div className="bg-surface-container-lowest rounded-2xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-outline-variant/30">
@@ -56,7 +63,7 @@ export default async function DashboardPage() {
               >
                 <div className="flex items-center gap-4 min-w-0">
                   <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-secondary shrink-0">
-                    <span className="material-symbols-outlined">storefront</span>
+                    <BuildingStorefrontIcon className="h-5 w-5" />
                   </div>
                   <div className="min-w-0">
                     <p className="font-semibold text-sm text-on-surface truncate">

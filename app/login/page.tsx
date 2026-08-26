@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ViewfinderCircleIcon } from "@heroicons/react/24/outline";
 import { login } from "./actions";
 
 export default function LoginPage() {
@@ -16,9 +17,7 @@ export default function LoginPage() {
         className="w-full max-w-sm space-y-4 rounded-2xl border border-outline-variant bg-surface-container-lowest p-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)]"
       >
         <div className="flex items-center gap-3 mb-2">
-          <span className="material-symbols-outlined text-secondary text-3xl">
-            target
-          </span>
+          <ViewfinderCircleIcon className="h-8 w-8 text-secondary" />
           <h1 className="text-xl font-semibold text-on-surface">TapReview</h1>
         </div>
         {error && <p className="text-sm text-error">{error}</p>}

@@ -1,11 +1,10 @@
 import Link from "next/link";
+import { ViewfinderCircleIcon } from "@heroicons/react/24/outline";
 
 export default function Home() {
   return (
     <main className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center bg-background">
-      <span className="material-symbols-outlined text-secondary text-5xl">
-        target
-      </span>
+      <ViewfinderCircleIcon className="h-12 w-12 text-secondary" />
       <h1 className="text-3xl font-semibold text-on-surface">TapReview</h1>
       <p className="max-w-md text-on-surface-variant">
         Short-link menuju halaman Google review toko.

@@ -2,8 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
-import { isValidUrl, isValidUuid, normalizeSlug, randomSlug } from "@/lib/toko";
+import { generateToken, isValidUrl, isValidUuid, normalizeSlug, randomSlug } from "@/lib/toko";
+import { tokenRateLimiter } from "@/lib/rate-limit";
 
 async function requireUser() {
   const supabase = await createClient();
@@ -28,11 +30,20 @@ export async function createToko(formData: FormData) {
 
   const link_review = link && isValidUrl(link) ? link : null;
 
-  const { error } = await supabase
+  const { data: created, error } = await supabase
     .from("toko")
-    .insert({ nama, slug, link_review });
+    .insert({ nama, slug, link_review })
+    .select("id")
+    .single();
 
   if (error) throw new Error(error.message);
+
+  const token = generateToken();
+  const { error: tokenError } = await supabase
+    .from("toko_tokens")
+    .insert({ toko_id: created.id, token });
+
+  if (tokenError) throw new Error(tokenError.message);
 
   revalidatePath("/dashboard");
   redirect("/dashboard");
@@ -76,26 +87,56 @@ export async function deleteToko(id: string) {
   revalidatePath("/dashboard");
 }
 
-export async function fillLink(formData: FormData) {
-  const supabase = await requireUser();
+export async function setLinkByToken(formData: FormData) {
+  const slug = String(formData.get("slug") ?? "").trim();
+  const token = String(formData.get("token") ?? "").trim();
+  const link = String(formData.get("link_review") ?? "").trim();
 
-  const id = String(formData.get("id") ?? "");
+  if (!slug) return { error: "Slug tidak valid" };
+  if (!/^\d{8}$/.test(token)) return { error: "Token salah" };
+  if (!isValidUrl(link)) return { error: "Link tidak valid" };
+
+  const headersList = await headers();
+  const ip = (headersList.get("x-forwarded-for") ?? "unknown").split(",")[0].trim();
+  const key = `${ip}:${slug}`;
+
+  if (tokenRateLimiter.isBlocked(key)) {
+    return { error: "Terlalu banyak percobaan, coba lagi nanti" };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("set_link_by_token", {
+    p_slug: slug,
+    p_token: token,
+    p_link: link,
+  });
+
+  if (error) {
+    console.error("set_link_by_token failed:", error.message);
+    return { error: "Terjadi kesalahan, coba lagi" };
+  }
+
+  if (!data) {
+    tokenRateLimiter.recordFailure(key);
+    return { error: "Token salah" };
+  }
+
+  tokenRateLimiter.clear(key);
+  revalidatePath(`/${slug}`);
+  redirect(`/${slug}`);
+}
+
+export async function resetToken(id: string) {
+  const supabase = await requireUser();
 
   if (!isValidUuid(id)) throw new Error("ID tidak valid");
 
-  const link = String(formData.get("link_review") ?? "").trim();
-
-  if (!isValidUrl(link)) throw new Error("Link tidak valid");
-
-  const { data: toko, error } = await supabase
-    .from("toko")
-    .update({ link_review: link, updated_at: new Date().toISOString() })
-    .eq("id", id)
-    .select("slug")
-    .single();
+  const token = generateToken();
+  const { error } = await supabase
+    .from("toko_tokens")
+    .upsert({ toko_id: id, token });
 
   if (error) throw new Error(error.message);
 
-  revalidatePath("/");
-  redirect(`/${toko.slug}`);
+  revalidatePath("/dashboard");
 }

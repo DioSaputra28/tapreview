@@ -84,7 +84,7 @@ export async function deleteToko(id: string) {
   const { error } = await supabase.from("toko").delete().eq("id", id);
   if (error) throw new Error(error.message);
 
-  revalidatePath("/dashboard");
+  revalidatePath("/dashboard", "layout");
 }
 
 export async function setLinkByToken(formData: FormData) {
@@ -142,5 +142,5 @@ export async function resetToken(id: string) {
 
   if (error) throw new Error(error.message);
 
-  revalidatePath("/dashboard");
+  revalidatePath("/dashboard", "layout");
 }

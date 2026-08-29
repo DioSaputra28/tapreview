@@ -31,6 +31,18 @@ describe("createRateLimiter", () => {
     expect(rl.isBlocked("ip:slug", now + 70_000)).toBe(false);
   });
 
+  it("expires a stale block on recordFailure without a preceding isBlocked", () => {
+    const rl = createRateLimiter({ maxAttempts: 2, windowMs: 60_000, blockMs: 60_000 });
+    const now = 1_000_000;
+    rl.recordFailure("ip:slug", now);
+    rl.recordFailure("ip:slug", now + 1_000);
+    // now blocked
+    expect(rl.isBlocked("ip:slug", now + 2_000)).toBe(true);
+    // block expires, then a recordFailure should start a fresh window (not stay blocked)
+    rl.recordFailure("ip:slug", now + 61_000);
+    expect(rl.isBlocked("ip:slug", now + 61_000)).toBe(false);
+  });
+
   it("clear removes a block", () => {
     const rl = createRateLimiter({ maxAttempts: 2, windowMs: 60_000, blockMs: 60_000 });
     const now = 1_000_000;

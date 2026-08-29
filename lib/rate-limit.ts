@@ -17,29 +17,34 @@ export function createRateLimiter({
 }: Partial<RateLimitConfig> = {}) {
   const buckets = new Map<string, Bucket>();
 
+  function resolve(key: string, now: number): Bucket | undefined {
+    const bucket = buckets.get(key);
+    if (!bucket) return undefined;
+    if (bucket.blockedUntil > 0) {
+      if (now < bucket.blockedUntil) return bucket;
+      buckets.delete(key);
+      return undefined;
+    }
+    if (now >= bucket.windowStart + windowMs) {
+      buckets.delete(key);
+      return undefined;
+    }
+    return bucket;
+  }
+
   return {
     isBlocked(key: string, now: number = Date.now()): boolean {
-      const bucket = buckets.get(key);
-      if (!bucket) return false;
-      if (bucket.blockedUntil > 0) {
-        if (now < bucket.blockedUntil) return true;
-        buckets.delete(key);
-        return false;
-      }
-      return false;
+      const bucket = resolve(key, now);
+      return !!bucket && bucket.blockedUntil > 0;
     },
 
     recordFailure(key: string, now: number = Date.now()): void {
-      const bucket = buckets.get(key);
+      const bucket = resolve(key, now);
       if (!bucket) {
         buckets.set(key, { count: 1, windowStart: now, blockedUntil: 0 });
         return;
       }
       if (bucket.blockedUntil > 0) return;
-      if (now >= bucket.windowStart + windowMs) {
-        buckets.set(key, { count: 1, windowStart: now, blockedUntil: 0 });
-        return;
-      }
       bucket.count += 1;
       if (bucket.count >= maxAttempts) {
         bucket.blockedUntil = now + blockMs;

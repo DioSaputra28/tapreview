@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isValidUrl, normalizeSlug, randomSlug } from "./toko";
+import { generateToken, isValidUrl, normalizeSlug, randomSlug } from "./toko";
 
 describe("isValidUrl", () => {
   it("accepts https URLs", () => {
@@ -34,5 +34,13 @@ describe("randomSlug", () => {
     const a = randomSlug();
     const b = randomSlug();
     expect(a).not.toBe(b);
+  });
+});
+
+describe("generateToken", () => {
+  it("returns an 8-digit zero-padded string", () => {
+    for (let i = 0; i < 50; i++) {
+      expect(generateToken()).toMatch(/^\d{8}$/);
+    }
   });
 });

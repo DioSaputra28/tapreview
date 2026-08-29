@@ -29,6 +29,12 @@ export function randomSlug(): string {
   return crypto.randomUUID().replace(/-/g, "").slice(0, 12);
 }
 
+export function generateToken(): string {
+  const buf = new Uint32Array(1);
+  crypto.getRandomValues(buf);
+  return String(buf[0] % 100_000_000).padStart(8, "0");
+}
+
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function isValidUuid(value: string): boolean {

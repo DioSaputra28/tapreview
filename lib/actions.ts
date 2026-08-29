@@ -97,7 +97,11 @@ export async function setLinkByToken(formData: FormData) {
   if (!isValidUrl(link)) return { error: "Link tidak valid" };
 
   const headersList = await headers();
-  const ip = (headersList.get("x-forwarded-for") ?? "unknown").split(",")[0].trim();
+  const rawIp =
+    headersList.get("x-real-ip") ??
+    headersList.get("x-forwarded-for") ??
+    "unknown";
+  const ip = rawIp.split(",")[0].trim() || "unknown";
   const key = `${ip}:${slug}`;
 
   if (tokenRateLimiter.isBlocked(key)) {

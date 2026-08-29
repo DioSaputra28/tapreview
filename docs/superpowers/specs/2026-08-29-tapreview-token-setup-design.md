@@ -21,16 +21,20 @@ The web app remains an intermediary: the physical product is an acrylic piece wi
 ## New Behavior
 
 ### Public flow (`domain/slug`)
-1. Visit `domain/slug`.
+1. Visit `domain/slug` (this is what the QR/NFC points to).
 2. If `link_review` is set → `increment_klik` + redirect to the review link (unchanged).
-3. If not set → show a **two-step form**:
-   - Step 1: enter the **8-digit token**.
-   - Step 2 (token valid): enter the Google review link, save.
-4. Token is **permanent** — can be reused anytime to change the link later.
+3. If not set → **redirect to the setup page** `domain/slug/setup`.
+
+### Setup page (`domain/slug/setup`)
+- Accessible directly (resellers can open it anytime, even when a link is already set).
+- A **single form** with two fields: **token** (8 digits) + **Google review link**.
+- On submit: validate token → if valid, assign/update `link_review` → redirect to `domain/slug` (which now redirects to the review link).
+- Wrong token → generic "Token salah"; invalid link → "Link tidak valid".
+- Token is **permanent** — can be reused anytime to change the link later.
 
 ### Admin dashboard (unchanged auth, additive)
 - Admin logs in as today.
-- Each store shows its **8-digit token** (auto-generated on create), with **copy** and **reset** actions.
+- Each store shows its **8-digit token** (auto-generated on create), with **copy** and **reset** actions, plus the two URLs (main `domain/slug` and setup `domain/slug/setup`) for sharing with resellers.
 - Admin keeps full read/write/delete over all stores and tokens.
 
 ## Security Model
@@ -52,34 +56,30 @@ The web app remains an intermediary: the physical product is an acrylic piece wi
    - Else return false.
    - `GRANT EXECUTE ... TO anon, authenticated`.
 
-3. **New RPC `token_matches(p_slug text, p_token text) returns boolean`** (optional, used by the public form's step 1): SECURITY DEFINER, returns whether the token matches. This lets the UI reveal the link form only after a correct token, without exposing the token itself.
-
-> Note: Both RPCs must be rate-limited at the app layer (see below), because anon can call them freely.
+> Note: The RPC must be rate-limited at the app layer (see below), because anon can call it freely.
 
 ### App layer changes
 
-1. **`app/[slug]/page.tsx`** — restructure into two-step form:
+1. **`app/[slug]/page.tsx`** — simplify:
    - Server component reads the store by slug.
    - If `link_review` set → redirect + counter (existing behavior).
-   - Else render a client form component that:
-     - asks for token first,
-     - calls `token_matches` (via server action) to validate,
-     - on success reveals the link input,
-     - submits link via `set_link_by_token` (via server action),
-     - redirects to `/slug` (now with link → auto-redirect).
+   - Else → `redirect(\`/${slug}/setup\`)`.
 
-2. **Rate limiting** on the token-check / set-link server actions:
-   - In-memory or simple KV (e.g., per-IP + per-slug sliding window) — e.g., 5 failed attempts per IP per minute → block for 15 min.
-   - Implemented in a server action / route handler that checks before calling RPC.
+2. **`app/[slug]/setup/page.tsx`** (new) — the setup page:
+   - Server component reads the store by slug; if not found → `notFound()`.
+   - Renders a client form (`components/token-setup-form.tsx`) with two fields: token + link.
+   - Shows the store name so the reseller knows which store they're configuring.
 
-3. **`lib/actions.ts`** — add:
-   - `checkToken(formData)` — validates rate limit, calls `token_matches`, returns boolean (used by step 1).
-   - `setLinkByToken(formData)` — validates rate limit, `isValidUrl`, calls `set_link_by_token`, redirects.
-   - Keep existing admin actions unchanged.
+3. **`lib/actions.ts`** — add one public action:
+   - `setLinkByToken(formData)` — rate-limit, validate `isValidUrl`, call `set_link_by_token` RPC; on success `redirect(\`/${slug}\`)`, on failure return a generic error (no slug/token enumeration).
 
-4. **Dashboard** (`app/dashboard/toko/page.tsx` + create/edit):
+4. **Rate limiting** on `setLinkByToken`:
+   - In-memory or simple KV (e.g., per-IP sliding window) — e.g., 5 failed attempts per IP per minute → block for 15 min.
+   - Implemented before calling the RPC.
+
+5. **Dashboard** (`app/dashboard/toko/page.tsx` + create/edit):
    - On `createToko`, generate an 8-digit numeric token and insert into `toko_tokens` (server-side, admin only).
-   - Show token in the Toko table and edit page with copy + reset (regenerate) actions.
+   - Show token in the Toko table and edit page with copy + reset (regenerate) actions, plus the main and setup URLs for sharing.
    - Admin token reads go through the authenticated Supabase client (RLS: authenticated only).
 
 ## Token Specification
@@ -96,16 +96,19 @@ Public visitor
   GET /slug ──► link set? ──yes──► increment_klik ──► redirect(link)
                   │no
                   ▼
-            two-step form (client)
-              │ enter token
-              ▼
-            checkToken() → server action → rate-limit → token_matches RPC
-              │ valid
-              ▼
-            link input ──► setLinkByToken() → rate-limit → isValidUrl → set_link_by_token RPC
-              │
-              ▼
-            redirect(/slug) → (now has link) → redirect(link)
+            redirect(/slug/setup)
+
+Reseller (setup)
+  GET /slug/setup ──► single form (token + link)
+                          │ submit
+                          ▼
+            setLinkByToken() → rate-limit → isValidUrl → set_link_by_token RPC
+                          │ success
+                          ▼
+            redirect(/slug) ──► (link now set) ──► redirect(link)
+                          │ failure (bad token/link)
+                          ▼
+            re-render form with generic error
 ```
 
 ## Error Handling
@@ -113,13 +116,13 @@ Public visitor
 - Invalid token → generic "Token salah" (do not reveal whether slug exists vs token wrong).
 - Invalid link → "Link tidak valid".
 - Rate limited → "Terlalu banyak percobaan, coba lagi nanti".
-- Slug not found → `notFound()` (public page) as today.
+- Slug not found → `notFound()` (both public page and setup page).
 
 ## Testing
 
 - Unit: token generation format (8 digits, unique), URL validation unchanged.
-- Server-action tests: `checkToken` and `setLinkByToken` honor rate limit and validate URL.
-- Manual smoke: create store (token shown), open `/slug` unauthenticated, enter wrong token (rejected), enter correct token (form appears), save link (redirect works, counter increments), reuse token to change link, admin reset token invalidates old one.
+- Server-action tests: `setLinkByToken` honors rate limit, validates URL, rejects bad token.
+- Manual smoke: create store (token shown), open `/slug` unauthenticated → redirects to `/slug/setup`; enter wrong token (rejected), correct token + link → redirect to review; counter increments; reopen `/slug/setup` and change link with same token; admin reset token invalidates old one.
 
 ## Out of Scope
 

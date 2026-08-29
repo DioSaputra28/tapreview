@@ -3,13 +3,18 @@
 import { useState } from "react";
 import { ClipboardIcon, CheckIcon } from "@heroicons/react/24/outline";
 
-export function CopyLinkButton({ slug }: { slug: string }) {
+export function CopyButton({
+  text,
+  title = "Copy",
+}: {
+  text: string;
+  title?: string;
+}) {
   const [copied, setCopied] = useState(false);
 
   async function copy() {
-    const url = `${window.location.origin}/${slug}`;
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
@@ -21,8 +26,8 @@ export function CopyLinkButton({ slug }: { slug: string }) {
     <button
       type="button"
       onClick={copy}
+      title={title}
       className="rounded-full border border-outline-variant p-2 text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors"
-      title="Copy link"
     >
       {copied ? (
         <CheckIcon className="h-4 w-4 text-secondary" />

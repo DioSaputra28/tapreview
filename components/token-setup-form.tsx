@@ -11,6 +11,8 @@ export function TokenSetupForm({
   hasLink: boolean;
 }) {
   const [error, setError] = useState<string | null>(null);
+  const [token, setToken] = useState("");
+  const [link, setLink] = useState("");
 
   return (
     <form
@@ -32,6 +34,8 @@ export function TokenSetupForm({
           maxLength={8}
           required
           placeholder="12345678"
+          value={token}
+          onChange={(e) => setToken(e.target.value)}
           className="w-full rounded-xl border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm focus:ring-2 focus:ring-secondary focus:outline-none"
         />
       </label>
@@ -44,6 +48,8 @@ export function TokenSetupForm({
           type="url"
           required
           placeholder="https://g.page/r/.../review"
+          value={link}
+          onChange={(e) => setLink(e.target.value)}
           className="w-full rounded-xl border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm focus:ring-2 focus:ring-secondary focus:outline-none"
         />
       </label>

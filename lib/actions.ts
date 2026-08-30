@@ -45,8 +45,8 @@ export async function createToko(formData: FormData) {
 
   if (tokenError) throw new Error(tokenError.message);
 
-  revalidatePath("/dashboard");
-  redirect("/dashboard");
+  revalidatePath("/dashboard", "layout");
+  redirect("/dashboard/toko");
 }
 
 export async function updateToko(id: string, formData: FormData) {
@@ -72,8 +72,8 @@ export async function updateToko(id: string, formData: FormData) {
 
   if (error) throw new Error(error.message);
 
-  revalidatePath("/dashboard");
-  redirect("/dashboard");
+  revalidatePath("/dashboard", "layout");
+  redirect("/dashboard/toko");
 }
 
 export async function deleteToko(id: string) {

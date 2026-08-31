@@ -7,8 +7,8 @@ import {
   PlusIcon,
 } from "@heroicons/react/24/outline";
 import { createClient } from "@/lib/supabase/server";
-import { deleteToko } from "@/lib/actions";
 import { StatCard } from "@/components/stat-card";
+import { DeleteButton } from "@/components/delete-button";
 
 export const dynamic = "force-dynamic";
 
@@ -95,14 +95,7 @@ export default async function DashboardPage() {
                   >
                     Detail / QR
                   </Link>
-                  <form action={deleteToko.bind(null, toko.id)}>
-                    <button
-                      type="submit"
-                      className="rounded-full border border-outline-variant px-4 py-1.5 text-sm text-error hover:bg-error hover:text-white transition-colors"
-                    >
-                      Hapus
-                    </button>
-                  </form>
+                  <DeleteButton id={toko.id} nama={toko.nama} variant="text" />
                 </div>
               </li>
             ))}

@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { updateToko, resetToken } from "@/lib/actions";
 import { QrCode } from "./qrcode";
 import { CopyButton } from "@/components/copy-button";
+import { SubmitButton } from "@/components/submit-button";
 
 export const dynamic = "force-dynamic";
 
@@ -69,12 +70,7 @@ export default async function EditTokoPage({
             />
           </label>
           <div className="flex gap-3 pt-2">
-            <button
-              type="submit"
-              className="rounded-full bg-primary px-6 py-2.5 text-white font-semibold text-sm hover:bg-opacity-90 transition-colors"
-            >
-              Simpan
-            </button>
+            <SubmitButton>Simpan</SubmitButton>
             <Link
               href="/dashboard"
               className="rounded-full border border-outline-variant px-6 py-2.5 text-sm text-on-surface hover:bg-surface-container transition-colors"
